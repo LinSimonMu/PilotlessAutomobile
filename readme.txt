@@ -5,8 +5,7 @@ Created by Simon Lin.
 
 Branch		simon
 Time		Event
-2018-8-3	landmark finding by CV
-
+2018-8-3	 Lane Finding by CV
 
 *********************************************************************
 2018(c)Chameleon Software. SIMON STUDIO.
