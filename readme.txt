@@ -1,6 +1,8 @@
 *********************************************************************
 This is Pilotless Automobile Project using Raspberry Pi3 ModelB.
 The Controlling Chip is Cortex-M4 STM32F407IGT6.
+Considering using Raspberry's local GPIO to control the RC Car
+instead of using Cortex-M4 STM32F407IGT6.
 Created by Simon Lin.
 
 Branch		simon
