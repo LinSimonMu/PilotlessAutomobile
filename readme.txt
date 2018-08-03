@@ -6,5 +6,4 @@ Created by Simon Lin.
 2018(c)Chameleon Software. SIMON STUDIO.
 
 Email:linsimonmu@hotmail.com
-********************************************************************
-Creating a new branch is quick.
+*********************************************************************
