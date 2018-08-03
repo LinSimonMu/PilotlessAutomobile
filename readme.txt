@@ -7,4 +7,4 @@ Created by Simon Lin.
 
 Email:linsimonmu@hotmail.com
 ********************************************************************
-
+Creating a new branch is quick.
