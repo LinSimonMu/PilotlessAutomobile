@@ -42,9 +42,9 @@ def train():
     width = tf.cast(features["train_image_width"], tf.int32)
     channels = tf.cast(features["train_image_channels"], tf.int32)
 
-    # 重原始图像解析出像素矩阵，根据图像尺寸还原图像
+    # 原始图像解析出像素矩阵，根据图像尺寸还原图像
     decoded_image = tf.decode_raw(image, tf.uint8)
-    decoded_image.set_shape([height, width, channels])
+    decoded_image = tf.reshape(decoded_image, [height, width, channels])
 
     # 定义输入神经网络输入层图片的大小
     image_height = Data_Import.train_images_height
@@ -60,24 +60,25 @@ def train():
                                                       capacity=capacity,
                                                       min_after_dequeue=min_after_dequeue)
 
-    x_train_batch = tf.placeholder(tf.float32, [BATCH_SIZE, LeF.IMAGE_SIZE, LeF.IMAGE_SIZE, LeF.IMAGE_CHANNELS],
+    x_train_batch = tf.placeholder(tf.float32, [BATCH_SIZE, image_height, image_width, LeF.IMAGE_CHANNELS],
                                    name="x-input")
-    y_train_batch_ = tf.placeholder(tf.float32, [BATCH_SIZE, LeF.IMAGE_LABELS], name="y-input")
+    y_train_batch_ = tf.placeholder(tf.int32, [BATCH_SIZE], name="y-input")
 
     regularizer = tf.contrib.layers.l2_regularizer(REGULARIZATION_RATE)
 
     # 前向传播
-    y_train_batch = LeF.forward_process(x_train_batch, True, regularizer)
+    y_train_batch = LeF.inference(x_train_batch, True, regularizer)
 
     global_step = tf.Variable(0, trainable=False)
 
     # 定义损失函数、学习率、滑动平均操作以及训练过程
-    variable_averages = tf.train.ExponentialMovingAverage(MOVING_AVERAGE_DECAY, global_step)
-    variable_averages_op = variable_averages.apply(tf.trainable_variables())
+    with tf.variable_scope(tf.get_variable_scope(),reuse=tf.AUTO_REUSE):
+        variable_averages = tf.train.ExponentialMovingAverage(MOVING_AVERAGE_DECAY, global_step)
+        variable_averages_op = variable_averages.apply(tf.trainable_variables())
 
     # 计算交叉熵
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y_train_batch,
-                                                                   labels=tf.argmax(y_train_batch_, 1))
+                                                                   labels=y_train_batch_)
     cross_entropy_mean = tf.reduce_mean(cross_entropy)
     loss = cross_entropy_mean + tf.add_n(tf.get_collection("losses"))
 
@@ -99,8 +100,9 @@ def train():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         for i in range(TRAINING_STEPS):
+            image_batch_feed, label_batch_feed = sess.run([image_batch, label_batch]) 
             _, loss_value, step = sess.run([train_op, loss, global_step],
-                                           feed_dict={x_train_batch: image_batch, y_train_batch_: label_batch})
+                                           feed_dict={x_train_batch: image_batch_feed, y_train_batch_: label_batch_feed})
 
             # 每1000轮保存一次模型
             if i % 1000 == 0:

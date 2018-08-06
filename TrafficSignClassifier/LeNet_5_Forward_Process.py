@@ -49,9 +49,9 @@ def get_weight_variable(shape, regularizer):
 
 # 定义神经网络的前向传播过程
 # 训练中加入dropout正则化，只在训练中使用，测试中不使用dropout
-def forward_process(x_input, train, regularizer):
+def inference(x_input, train, regularizer):
     # 第一层卷积层1
-    with tf.variable_scope("layer1-conv1"):
+    with tf.variable_scope("layer1-conv1", reuse=tf.AUTO_REUSE):
         conv1_weights = tf.get_variable("weight", [CONV1_SIZE, CONV1_SIZE, IMAGE_CHANNELS, CONV1_DEEP],
                                         initializer=tf.truncated_normal_initializer(stddev=0.1))
         conv1_biases = tf.get_variable("bias", [CONV1_DEEP], initializer=tf.constant_initializer(0.0))
@@ -60,11 +60,11 @@ def forward_process(x_input, train, regularizer):
         relu1 = tf.nn.relu(tf.nn.bias_add(conv1, conv1_biases))
 
     # 第二层池化层1
-    with tf.variable_scope("layer2-pool1"):
+    with tf.variable_scope("layer2-pool1", reuse=tf.AUTO_REUSE):
         pool1 = tf.nn.max_pool(relu1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="VALID")
 
     # 第三层卷积层2
-    with tf.variable_scope("layer3-conv2"):
+    with tf.variable_scope("layer3-conv2", reuse=tf.AUTO_REUSE):
         conv2_weights = tf.get_variable("weight", [CONV2_SIZE, CONV2_SIZE, CONV1_DEEP, CONV2_DEEP],
                                         initializer=tf.truncated_normal_initializer(stddev=0.1))
         conv2_biases = tf.get_variable("bias", [CONV2_DEEP], initializer=tf.constant_initializer(0.0))
@@ -73,11 +73,11 @@ def forward_process(x_input, train, regularizer):
         relu2 = tf.nn.relu(tf.nn.bias_add(conv2, conv2_biases))
 
     # 第四层池化层2
-    with tf.variable_scope("layer4-pool2"):
+    with tf.variable_scope("layer4-pool2", reuse=tf.AUTO_REUSE):
         pool2 = tf.nn.max_pool(relu2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="VALID")
 
     # 第五层（全连接层）特殊卷积层3
-    with tf.variable_scope("layer5-special-conv3"):
+    with tf.variable_scope("layer5-special-conv3", reuse=tf.AUTO_REUSE):
         conv3_weights = tf.get_variable("weight", [CONV3_SIZE, CONV3_SIZE, CONV2_DEEP, CONV3_DEEP],
                                         initializer=tf.truncated_normal_initializer(stddev=0.1))
         conv3_biases = tf.get_variable("bias", [CONV3_DEEP], initializer=tf.constant_initializer(0.0))
@@ -93,8 +93,8 @@ def forward_process(x_input, train, regularizer):
     fc1_output = tf.reshape(relu3, [fc1_shape[0], FC1_NODES])
 
     # 第六层全连接层2
-    with tf.variable_scope("layer6-fc2"):
-        fc2_weights = tf.get_variable("weight", [fc1_output, FC2_NODES],
+    with tf.variable_scope("layer6-fc2", reuse=tf.AUTO_REUSE):
+        fc2_weights = tf.get_variable("weight", [FC1_NODES, FC2_NODES],
                                       initializer=tf.truncated_normal_initializer(stddev=0.1))
         fc2_biases = tf.get_variable("bias", [FC2_NODES], initializer=tf.constant_initializer(0.1))
         # 全连接层l2正则化
@@ -108,10 +108,10 @@ def forward_process(x_input, train, regularizer):
             fc2_output = tf.nn.dropout(fc2_output, 0.5)
 
     # 第七层全连接层3
-    with tf.variable_scope("layer7-fc3"):
-        fc3_weights = tf.get_variable("weight", [FC3_NODES, IMAGE_LABELS],
+    with tf.variable_scope("layer7-fc3", reuse=tf.AUTO_REUSE):
+        fc3_weights = tf.get_variable("weight", [FC2_NODES, FC3_NODES],
                                       initializer=tf.truncated_normal_initializer(stddev=0.1))
-        fc3_biases = tf.get_variable("bias", [IMAGE_LABELS], initializer=tf.constant_initializer(0.1))
+        fc3_biases = tf.get_variable("bias", [FC3_NODES], initializer=tf.constant_initializer(0.1))
 
         if regularizer != None:
             tf.add_to_collection("losses", regularizer(fc3_weights))
