@@ -6,7 +6,6 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 training_file = "./Data/train.p"
 testing_file = "./Data/test.p"
 
@@ -24,6 +23,8 @@ image_width = x_train.shape[2]  # 图像宽度
 image_channels = x_train.shape[3]  # 图像通道数
 image_classes = len(set(y_train))  # 图像总类别数
 
+image_test_nums = x_test.shape[0]  # 测试总样本数
+
 """解码前的图片存为字符串，图像所对应的类别存为整数列表"""
 
 
@@ -37,6 +38,7 @@ def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
+"""将训练数据保存为TFRecorder"""
 train_images = x_train
 train_images_labels = y_train
 train_images_height = image_height
@@ -64,4 +66,30 @@ for index in range(train_images_nums):
     writer.write(train_example.SerializeToString())
 writer.close()
 
+"""将测试数据保存为TFRecorder"""
+test_images = x_test
+test_images_labels = y_test
+test_images_height = image_height
+test_images_width = image_width
+test_images_channels = image_channels
+test_images_nums = image_test_nums
 
+# 输出TFRecord文件的地址
+filename = "./Data/test_images.tfrecords"
+# 创建writer写入TFRecord文件
+writer = tf.python_io.TFRecordWriter(filename)
+for index in range(test_images_nums):
+    # 将图像矩阵转换为字符串
+    test_image_raw = test_images[index].tostring()
+    # 将训练样例转换为Example Protocol Buffer,并将所有信息写入数据结构
+    test_example = tf.train.Example(features=tf.train.Features(feature={
+        "test_image_raw": _bytes_feature(test_image_raw),
+        "test_image_label": _int64_feature(test_images_labels[index]),
+        "test_image_height": _int64_feature(test_images_height),
+        "test_image_width": _int64_feature(test_images_width),
+        "test_image_channels": _int64_feature(test_images_channels),
+    }))
+
+    # 将一个Example写入TFRecord文件
+    writer.write(test_example.SerializeToString())
+writer.close()
